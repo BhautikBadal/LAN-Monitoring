@@ -11,5 +11,10 @@ pipeline {
         sh 'python3 LAN_Monitor.py'
       }
     }
+    stage('Monitoring Your WAN') {
+      steps {
+        sh 'python3 WAN_Monitor.py'
+      }
+    }
   }
 }
