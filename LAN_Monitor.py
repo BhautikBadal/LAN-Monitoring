@@ -138,8 +138,6 @@ def update_interface(switch_ip, switch_user, switch_password, intFaceID):
 response = nxapi_ping('172.26.21.101', 'admin',
                       'Lock&Key()19', 'wan', '10.10.0.2')
 
-response1 = nxapi_ping('172.26.21.101', 'admin',
-                      'Lock&Key()19', 'wan', '10.10.10.2')
 
 print("Checking For 10.10.0.2")
 
@@ -155,16 +153,4 @@ if '100.00% packet loss' in response['result']['msg']:
 else:
     print("LAN connection is Up")
 
-print("Checking For 10.10.10.2")
 
-if '100.00% packet loss' in response1['result']['msg']:
-    print("Detected WAN connection is Down...")
-    response1 = nxapi_ping('172.26.21.101', 'admin',
-                          'Lock&Key()19', 'wan', '10.10.10.2')
-    if '100.00% packet loss' in response1['result']['msg']:
-        print("WAN connection is Down, verifying network connectivity!")
-        gateway_ping('172.26.21.101', 'admin','Lock&Key()19', 'wan', '10.10.0.1',1)
-    else:
-        print("WAN connection is Up!")
-else:
-    print("WAN connection is Up")
