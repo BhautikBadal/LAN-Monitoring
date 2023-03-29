@@ -44,7 +44,7 @@ def nxapi_ping(switch_ip, switch_user, switch_password, vrf_name, destination_ip
     return response
 
 
-def gateway_ping(switch_ip, switch_user, switch_password, vrf_name, destination_ip):
+def gateway_ping(switch_ip, switch_user, switch_password, vrf_name, destination_ip,intFaceID):
     """
     This function sends a ping command to a Cisco Nexus switch via NX-API.
     Args:
@@ -84,25 +84,28 @@ def gateway_ping(switch_ip, switch_user, switch_password, vrf_name, destination_
     if '100.00% packet loss' in response['result']['msg']:
         print("Lost Gateway Connection, Logging a case with Service Provider...")
     else:
-        intResponse = show_interface()
+        intResponse = show_interface(intFaceID)
         print("Your current interface state is:-", intResponse)
         if intResponse == "down":
-            update_interface('172.26.21.101','admin', 'Lock&Key()19')   
+            update_interface('172.26.21.101','admin', 'Lock&Key()19', intFaceID)   
         
 
 
 
-def show_interface():
+def show_interface(intfaceID):
+
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     switchuser = 'admin'
     switchpassword = 'Lock&Key()19'
     url = 'https://172.26.21.101/ins'
     myheaders = {'content-type': 'application/json-rpc'}
     payload = [{"jsonrpc": "2.0",        "method": "cli",        "params": {
-        "cmd": "show int eth 1/4",          "version": 1},        "id": 1}]
+        "cmd": f"show int eth 1/{intfaceID}",          "version": 1},        "id": 1}]
+    
 
     response = requests.post(url, data=json.dumps(payload), headers=myheaders, auth=(
         switchuser, switchpassword), verify=False).json()
-    # print(response)
+
     
     print("Verifying Interface Status...")
 
@@ -111,7 +114,7 @@ def show_interface():
     return interface_State
 
 
-def update_interface(switch_ip, switch_user, switch_password):
+def update_interface(switch_ip, switch_user, switch_password, intFaceID):
     # Disable SSL warnings
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -121,19 +124,24 @@ def update_interface(switch_ip, switch_user, switch_password):
     myheaders = {'content-type': 'application/json-rpc'}
 
     payload = [{"jsonrpc": "2.0",            "method": "cli",            "params": {"cmd": "conf t",                "version": 1},            "id": 1},        {"jsonrpc": "2.0",            "method": "cli",            "params": {
-        "cmd": "int eth 1/4",                "version": 1},            "id": 2},        {"jsonrpc": "2.0",            "method": "cli",            "params": {"cmd": "no shutdown",                "version": 1},            "id": 3},]
+        "cmd": f"int eth 1/{intFaceID}",                "version": 1},            "id": 2},        {"jsonrpc": "2.0",            "method": "cli",            "params": {"cmd": "no shutdown",                "version": 1},            "id": 3},]
 
     requests.post(url, data=json.dumps(payload), headers=myheaders, auth=(
         switch_user, switch_password), verify=False).json()
     
     
-    interfaceRes =show_interface()
-    print("your current interface state is updated", interfaceRes)
+    interfaceRes =show_interface(intFaceID)
+    print("your interface state is ", interfaceRes)
 
 
 # main entry
 response = nxapi_ping('172.26.21.101', 'admin',
                       'Lock&Key()19', 'wan', '10.10.0.2')
+
+response1 = nxapi_ping('172.26.21.101', 'admin',
+                      'Lock&Key()19', 'wan', '10.10.10.2')
+
+print("Checking For 10.10.0.2")
 
 if '100.00% packet loss' in response['result']['msg']:
     print("Detected LAN connection is Down...")
@@ -141,8 +149,22 @@ if '100.00% packet loss' in response['result']['msg']:
                           'Lock&Key()19', 'wan', '10.10.0.2')
     if '100.00% packet loss' in response['result']['msg']:
         print("LAN connection is Down, verifying network connectivity!")
-        gateway_ping('172.26.21.101', 'admin','Lock&Key()19', 'wan', '10.10.0.1')
+        gateway_ping('172.26.21.101', 'admin','Lock&Key()19', 'wan', '10.10.0.1',4)
     else:
         print("LAN connection is Up!")
 else:
     print("LAN connection is Up")
+
+print("Checking For 10.10.10.2")
+
+if '100.00% packet loss' in response1['result']['msg']:
+    print("Detected WAN connection is Down...")
+    response1 = nxapi_ping('172.26.21.101', 'admin',
+                          'Lock&Key()19', 'wan', '10.10.10.2')
+    if '100.00% packet loss' in response1['result']['msg']:
+        print("WAN connection is Down, verifying network connectivity!")
+        gateway_ping('172.26.21.101', 'admin','Lock&Key()19', 'wan', '10.10.0.1',1)
+    else:
+        print("WAN connection is Up!")
+else:
+    print("WAN connection is Up")
