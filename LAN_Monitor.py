@@ -90,8 +90,6 @@ def gateway_ping(switch_ip, switch_user, switch_password, vrf_name, destination_
             update_interface('172.26.21.101','admin', 'Lock&Key()19', intFaceID)   
         
 
-
-
 def show_interface(intfaceID):
 
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -141,16 +139,20 @@ response = nxapi_ping('172.26.21.101', 'admin',
 
 print("Checking For 10.10.0.2")
 
-if '100.00% packet loss' in response['result']['msg']:
-    print("Detected LAN connection is Down...")
-    response = nxapi_ping('172.26.21.101', 'admin',
-                          'Lock&Key()19', 'wan', '10.10.0.2')
+try:
+    response = nxapi_ping('172.26.21.101', 'admin', 'Lock&Key()19', 'wan', '10.10.0.2')
     if '100.00% packet loss' in response['result']['msg']:
-        print("LAN connection is Down, verifying network connectivity!")
-        gateway_ping('172.26.21.101', 'admin','Lock&Key()19', 'wan', '10.10.0.1',4)
+        print("Detected LAN connection is Down...")
+        response = nxapi_ping('172.26.21.101', 'admin', 'Lock&Key()19', 'wan', '10.10.0.2')
+        if '100.00% packet loss' in response['result']['msg']:
+            print("LAN connection is Down, verifying network connectivity!")
+            gateway_ping('172.26.21.101', 'admin', 'Lock&Key()19', 'wan', '10.10.0.1', 4)
+        else:
+            print("LAN connection is Up!")
     else:
-        print("LAN connection is Up!")
-else:
-    print("LAN connection is Up")
+        print("LAN connection is Up")
+except Exception as e:
+    print("An error occurred while pinging the IP address. Please check the IP address and try again. Error message: ", e)
+
 
 

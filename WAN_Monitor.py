@@ -141,14 +141,18 @@ response = nxapi_ping('172.26.21.101', 'admin',
 
 print("Checking For 10.10.10.2")
 
-if '100.00% packet loss' in response['result']['msg']:
-    print("Detected WAN connection is Down...")
-    response = nxapi_ping('172.26.21.101', 'admin',
-                          'Lock&Key()19', 'wan', '10.10.10.2')
+try:
+    response = nxapi_ping('172.26.21.101', 'admin', 'Lock&Key()19', 'wan', '10.10.10.2')
     if '100.00% packet loss' in response['result']['msg']:
-        print("WAN connection is Down, verifying network connectivity!")
-        gateway_ping('172.26.21.101', 'admin','Lock&Key()19', 'wan', '10.10.0.1',1)
+        print("Detected WAN connection is Down...")
+        response = nxapi_ping('172.26.21.101', 'admin', 'Lock&Key()19', 'wan', '10.10.10.2')
+        if '100.00% packet loss' in response['result']['msg']:
+            print("WAN connection is Down, verifying network connectivity!")
+            gateway_ping('172.26.21.101', 'admin', 'Lock&Key()19', 'wan', '10.10.0.1', 1)
+        else:
+            print("WAN connection is Up!")
     else:
-        print("WAN connection is Up!")
-else:
-    print("WAN connection is Up")
+        print("WAN connection is Up")
+except Exception as e:
+    print("An error occurred while pinging the IP address. Please check the IP address and try again. Error message: ", e)
+
